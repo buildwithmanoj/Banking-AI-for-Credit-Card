@@ -1,43 +1,52 @@
-```markdown
-# Smart Spending Advisor — Streamlit app
+# Smart Spending Advisor
 
-Files added:
-- app.py — Streamlit app and model training/prediction code.
-- requirements.txt — Python package list.
-- data/spending_patterns_REALISTIC_97percent.csv — your dataset (place in data/ or upload at runtime).
+A behavior-aware payment and card recommendation engine. The app reads how a
+customer actually spends (category mix, ticket size, channel, payment loyalty)
+and recommends the right card product, with explainable reasoning for both
+business and technical reviewers.
 
-Quick local run (Windows / macOS / Linux)
-1. Clone repo (or open the folder where app.py lives).
-   git clone https://github.com/iammanojg/Trail-run-for-streamlit.git
-   cd Trail-run-for-streamlit
+Built with XGBoost, CatBoost and Logistic Regression in a soft-vote ensemble,
+wrapped in a Streamlit UI.
 
-2. Create & activate a virtual environment:
-   python -m venv .venv
-   # Windows (PowerShell)
-   .venv\\Scripts\\Activate.ps1
-   # Windows (cmd)
-   .venv\\Scripts\\activate
-   # macOS / Linux
-   source .venv/bin/activate
+## What it does
 
-3. Install dependencies:
-   pip install -r requirements.txt
+* Ingests transaction-level customer data (10k rows, 200 customers in the
+  bundled sample, 2 years of history).
+* Aggregates to one row per customer: ticket statistics, category-share
+  features, channel-share features, and payment loyalty.
+* Trains three models on a 75/25 stratified split and soft-votes the output.
+* Maps the predicted primary payment rail to a card product and renders the
+  reasoning.
 
-4. Put your dataset in: data/spending_patterns_REALISTIC_97percent.csv
-   (Or use the sidebar file uploader when the app runs.)
+## Two views
 
-5. Run Streamlit:
-   streamlit run app.py
+**Business view** — one customer at a time, with a spend donut, channel split,
+monthly trend, the recommended card, and a one-line reason a product manager
+can read without ML vocabulary.
 
-Using the app
-- In the sidebar you can upload a CSV, change CatBoost iterations and depth, and retrain.
-- Enter a Customer ID into the main input and click "Analyze Spending" to get:
-  - Analytical bullet points (feature-based),
-  - Predicted payment method and confidence,
-  - A generative-style recommendation aimed at encouraging cash/debit/digital-wallet users toward credit card use.
+**Technical view** — dataset quality strip, per-model prediction with class
+probabilities, agreement indicator, holdout accuracies, confusion matrices,
+and feature importances for the two tree models.
 
-Notes
-- The app trains a CatBoost model on the dataset on first run and caches it for subsequent interactions.
-- If your real dataset is large, training may take longer; increase/decrease iterations in the sidebar.
-- Keep any private dataset out of public repositories. For production, train offline, save the model (joblib) and load the pre-trained model in the app to avoid training in the web app.
+## Data format
+
+Expected CSV columns:
+
 ```
+Customer ID, Category, Item, Quantity, Price Per Unit,
+Total Spent, Payment Method, Location, Transaction Date
+```
+
+The bundled `sample_data.csv` ships with the repo so the app runs out of the
+box. Users can also upload their own CSV from the sidebar.
+
+## Run it
+
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+## Stack
+
+Python 3.11, Streamlit, Plotly, scikit-learn, XGBoost, CatBoost.
